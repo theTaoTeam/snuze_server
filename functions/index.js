@@ -1,13 +1,27 @@
-require('dotenv');
+require('dotenv').config();
 const functions = require('firebase-functions');
 const stripe = require('stripe')(process.env.STRIPE_SECRET);
 
 const admin = require('firebase-admin');
 admin.initializeApp();
 
-// // Create and Deploy Your First Cloud Functions
-// // https://firebase.google.com/docs/functions/write-firebase-functions
-//
 exports.helloWorld = functions.https.onRequest((request, response) => {
  response.send("Hello from Firebase!");
 });
+
+exports.createUser = functions.https.onRequest((req, res) => {
+  console.log(req.body);
+  const customer = createStripeCustomer();
+});
+
+
+async function createStripeCustomer() {
+  try {
+    const customer = await stripe.customers.create({
+      email: 'wes@test.com'
+    });
+    console.log(customer);
+  } catch (error) {
+    console.log(error);
+  }
+}
