@@ -6,9 +6,9 @@ Make sure you've logged into Firebase using the firebase cli.
 
     1. Install firebase command line tools globally using `npm i -g firebase-tools`.
     2. Login to firebase using `firebase login`.
-    3. Use `firebase use` to select the firebase instance to use. This is necessary for testing as well as deployment and serving.
-        - staging - All functionality should be tested here first.
-        - master - Functions can be manually run from here if needed.
+    3. Use `firebase use project_alias` to select the firebase project to use. This is necessary for testing as well as deployment and serving.
+        - `firebase use` will list available project names.
+        - Alternatively, check .firebaserc for project aliases.
     4. Additional info can be found [here](https://firebase.google.com/docs/cli/)
 
 #### dotenv
