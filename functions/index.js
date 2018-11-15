@@ -15,6 +15,7 @@ exports.createUser = functions.https.onRequest((req, res) => {
 });
 
 exports.createSnuzes = functions.https.onRequest((req, res) => {
+  console.log("still testing");
   res.send("Testing organization settings");
 });
 
