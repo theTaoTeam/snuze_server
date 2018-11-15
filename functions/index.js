@@ -14,6 +14,9 @@ exports.createUser = functions.https.onRequest((req, res) => {
   const customer = createStripeCustomer();
 });
 
+exports.createSnuzes = functions.https.onRequest((req, res) => {
+  res.send("Testing organization settings");
+});
 
 async function createStripeCustomer() {
   try {
