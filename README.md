@@ -1,6 +1,9 @@
 # Snuze Server
 ## Setup
 
+#### npm
+There are 2 separate package.json files. The root dependencies are for global setup like commitizen. The package.json inside the functions folder is necessary for all dependencies of firebase functions server.
+
 #### Firebase
 Make sure you've logged into Firebase using the firebase cli.
 
