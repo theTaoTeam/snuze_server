@@ -1,5 +1,6 @@
 require('dotenv').config();
 const stripe = require('stripe')(process.env.STRIPE_SECRET);
+const moment = require('moment');
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 admin.initializeApp();
@@ -11,27 +12,31 @@ firestore.settings(settings);
 
 
 const testUser = {
-  email: "test@test.com",
+  email: "clamptron@gmail.com",
   source: 'tok_visa'
 }
 
 exports.createUser = functions.https.onRequest(async (req, res) => {
   try {
-    const customer = await stripe.customers.create(testUser);
-    const stripeUser = {
-      authId: 'Y099jN9mo6V31JRVR4MfvoOHzAw2',
-      email: testUser.email,
+    const stripeData = {
+      email: req.body.user.email,
+      source: req.body.user.source,
+    }
+    const customer = await stripe.customers.create(stripeData);
+    const fullUser = {
+      authId: req.body.user.authId,
+      email: req.body.user.email,
       stripeId: customer.id
     }
-    return admin.firestore().collection('users').doc(stripeUser.authId).set(stripeUser).then(() => {
+    return admin.firestore().collection('users').doc(fullUser.authId).set(fullUser).then(() => {
       return res.status(303).send('CREATED_USER');
     }).catch((err) => {
-      return res.status(500).send('ERROR_');
-    })
+      return res.status(500).send('ERR_FIREBASE');
+    });
   } catch(err) {
     console.log('THERE WAS AN ERROR CREATING THE USER');
     console.log(err);
-    res.send(JSON.stringify(err));
+    res.status(500).send('ERR_STRIPE');
   }
 });
 
@@ -40,6 +45,38 @@ exports.getUserStats = functions.https.onRequest((req, res) => {
 })
 
 exports.createSnuzes = functions.https.onRequest((req, res) => {
-  console.log("still testing");
-  res.send("Testing organization settings");
+  console.log(req.body.snuzes);
+  req.body.snuzes.forEach(async (snuze) => {
+    const date = moment(snuze.alarmTime, "YYYY-MM-DD HH:mm", true).toDate();
+    snuze.alarmTime = date;
+    try {
+      const snuzeRef = await admin.firestore().collection('snuzes').add(snuze);
+      console.log(snuzeRef.id);
+      const userRef = await _getUser(req.body.userId);
+      console.log('THIS IS THE USER');
+      console.log(userRef.path, snuzeRef.path);
+      // const updatedSnuze = admin.firestore().collection('snuzes').doc(snuzeRef.id).update({user: new admin.firestore.FieldPath(userRef.path)});
+      // console.log('UPDATED SNUZE');
+      // console.log(updatedSnuze);
+      // const updatedUser = admin.firestore().collection('users').doc(userRef.id).update({
+      //     snuzes: admin.firestore.FieldValue.arrayUnion(new admin.firestore.FieldPath(snuzeRef.path))
+      //   });
+      // console.log('UPDATED USER');
+      // console.log(updatedUser);
+    } catch (err) {
+      console.log(err);
+      console.log('FIREBASE ERR');
+    }
+  });
+  res.send("createSnuzes done executing");
 });
+
+async function _getUser(userId) {
+  const userRef = admin.firestore().collection('users').doc(userId);
+  try {
+    const user = userRef.get();
+    return user;
+  } catch(err) {
+    console.log('ERROR_GETTING_USER');
+  }
+}
