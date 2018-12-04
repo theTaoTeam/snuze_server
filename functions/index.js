@@ -31,10 +31,10 @@ exports.createUser = functions.https.onRequest(async (req, res) => {
     return admin.firestore().collection('users').doc(fullUser.authId).set(fullUser).then(() => {
       return res.status(303).send('CREATED_USER');
     }).catch((err) => {
+      console.log(err);
       return res.status(500).send('ERR_FIREBASE');
     });
   } catch(err) {
-    console.log('THERE WAS AN ERROR CREATING THE USER');
     console.log(err);
     res.status(500).send('ERR_STRIPE');
   }
