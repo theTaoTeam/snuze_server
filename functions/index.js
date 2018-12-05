@@ -9,6 +9,7 @@ const settings = {
   timestampsInSnapshots: true
 }
 firestore.settings(settings);
+const FieldValue = admin.firestore.FieldValue;
 
 
 const testUser = {
@@ -23,20 +24,28 @@ exports.createUser = functions.https.onRequest(async (req, res) => {
       source: req.body.user.source,
     }
     const customer = await stripe.customers.create(stripeData);
+
+    const invoiceRef = firestore.collection('invoices').doc();
     const fullUser = {
       authId: req.body.user.authId,
       email: req.body.user.email,
-      stripeId: customer.id
-    }
-    return admin.firestore().collection('users').doc(fullUser.authId).set(fullUser).then(() => {
-      return res.status(303).send('CREATED_USER');
-    }).catch((err) => {
-      console.log(err);
-      return res.status(500).send('ERR_FIREBASE');
-    });
+      stripeId: customer.id,
+      activeInvoice: invoiceRef,
+      invoiceRefs: FieldValue.arrayUnion(invoiceRef)
+    };
+    return firestore
+      .collection('users')
+      .doc(fullUser.authId)
+      .set(fullUser)
+      .then(() => {
+        return res.status(303).send('CREATED_USER');
+      }).catch((err) => {
+        console.log(err);
+        return res.status(500).send('ERR_FIREBASE');
+      });
   } catch(err) {
     console.log(err);
-    res.status(500).send('ERR_STRIPE');
+    res.status(500).send('ERR_CREATE_USER');
   }
 });
 
@@ -45,38 +54,46 @@ exports.getUserStats = functions.https.onRequest((req, res) => {
 })
 
 exports.createSnuzes = functions.https.onRequest((req, res) => {
-  console.log(req.body.snuzes);
-  req.body.snuzes.forEach(async (snuze) => {
-    const date = moment(snuze.alarmTime, "YYYY-MM-DD HH:mm", true).toDate();
-    snuze.alarmTime = date;
+  const snuzeCollectionRef = firestore.collection('snuzes');
+  const userDocRef = firestore.collection('users').doc(req.body.userId);
+  firestore.runTransaction(async (transaction) => {
     try {
-      const snuzeRef = await admin.firestore().collection('snuzes').add(snuze);
-      console.log(snuzeRef.id);
-      const userRef = await _getUser(req.body.userId);
-      console.log('THIS IS THE USER');
-      console.log(userRef.path, snuzeRef.path);
-      // const updatedSnuze = admin.firestore().collection('snuzes').doc(snuzeRef.id).update({user: new admin.firestore.FieldPath(userRef.path)});
-      // console.log('UPDATED SNUZE');
-      // console.log(updatedSnuze);
-      // const updatedUser = admin.firestore().collection('users').doc(userRef.id).update({
-      //     snuzes: admin.firestore.FieldValue.arrayUnion(new admin.firestore.FieldPath(snuzeRef.path))
-      //   });
-      // console.log('UPDATED USER');
-      // console.log(updatedUser);
-    } catch (err) {
+      const invoiceRef = await transaction;
+      // read operations must happen before write operations in a transaction
+      const userDoc = await transaction.get(userDocRef);
+      // create a list of references to add to user object in one transaction
+      let snuzeReferences = [];
+      for(let snuze of req.body.snuzes) {
+        // convert alarmTime into date format usable by firebase
+        snuze.alarmTime = moment(snuze.alarmTime, "YYYY-MM-DD HH:mm", true).toDate();
+        snuze.billed = false;
+        try {
+          const snuzeRef = snuzeCollectionRef.doc();
+          const snuzeDoc = await transaction.set(snuzeRef, snuze);
+          snuzeReferences.push(snuzeRef);
+        } catch (err) {
+          console.log(err);
+          return Promise.reject(new Error("Something went wrong"));
+        }
+        // update snuze references on user object all at once
+      }
+      res.send('CREATED_SNUZES');
+    } catch(err) {
       console.log(err);
-      console.log('FIREBASE ERR');
+      return Promise.reject(new Error('Something went wrong'));
     }
+  })
+  .catch(err => {
+    res.send('ERR_FIREBASE_SNUZES');
   });
-  res.send("createSnuzes done executing");
 });
 
-async function _getUser(userId) {
-  const userRef = admin.firestore().collection('users').doc(userId);
-  try {
-    const user = userRef.get();
-    return user;
-  } catch(err) {
-    console.log('ERROR_GETTING_USER');
-  }
-}
+// async function _getUser(userId) {
+//   const userRef = firestore.collection('users').doc(userId);
+//   try {
+//     const user = userRef.get();
+//     return user;
+//   } catch(err) {
+//     console.log('ERROR_GETTING_USER');
+//   }
+// }
