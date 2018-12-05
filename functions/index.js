@@ -49,6 +49,20 @@ exports.createUser = functions.https.onRequest(async (req, res) => {
   }
 });
 
+exports.createNewInvoice = functions.https.onRequest(async (req, res) => {
+  const invoiceRef = firestore.collection('invoices').doc();
+  try {
+    const userDoc = await firestore.collection('users').doc(req.body.userId).update({
+      activeInvoice: invoiceRef,
+      invoiceRefs: FieldValue.arrayUnion(invoiceRef)
+    });
+    res.status(303).send('CREATED_INVOICE');
+  } catch(err) {
+    console.log(err);
+    res.status(500).send('ERR_CREATE_INVOICE');
+  }
+})
+
 exports.getUserStats = functions.https.onRequest((req, res) => {
   res.send("getUserStats");
 })
