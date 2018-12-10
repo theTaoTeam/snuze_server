@@ -45,7 +45,7 @@ exports.createUser = functions.https.onRequest(async (req, res) => {
       });
   } catch(err) {
     console.log(err);
-    res.status(500).send('ERR_CREATE_USER');
+    return res.status(500).send('ERR_CREATE_USER');
   }
 });
 
@@ -75,30 +75,36 @@ exports.createSnuzes = functions.https.onRequest((req, res) => {
       const invoiceRef = await transaction;
       // read operations must happen before write operations in a transaction
       const userDoc = await transaction.get(userDocRef);
-      // create a list of references to add to user object in one transaction
-      let snuzeReferences = [];
+      // collect references to add to current invoice
+      let snuzeDocRefs = [];
+      // create a list of promises to handle in parallel
+      let snuzeDocPromises = [];
       for(let snuze of req.body.snuzes) {
         // convert alarmTime into date format usable by firebase
         snuze.alarmTime = moment(snuze.alarmTime, "YYYY-MM-DD HH:mm", true).toDate();
         snuze.billed = false;
         try {
           const snuzeRef = snuzeCollectionRef.doc();
-          const snuzeDoc = await transaction.set(snuzeRef, snuze);
-          snuzeReferences.push(snuzeRef);
+          snuzeDocRefs.push(snuzeRef);
+          const snuzeDoc = transaction.set(snuzeRef, snuze);
+          snuzeDocPromises.push(snuzeDoc);
         } catch (err) {
           console.log(err);
           return Promise.reject(new Error("Something went wrong"));
         }
         // update snuze references on user object all at once
       }
-      res.send('CREATED_SNUZES');
+      // fire all promises in parallel
+      await Promise.all(snuzeDocPromises);
+      return res.send('CREATED_SNUZES');
     } catch(err) {
       console.log(err);
       return Promise.reject(new Error('Something went wrong'));
     }
   })
   .catch(err => {
-    res.send('ERR_FIREBASE_SNUZES');
+    console.log(err);
+    return res.send('ERR_FIREBASE_SNUZES');
   });
 });
 

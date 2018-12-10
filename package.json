@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "npm test",
-    "lint": "eslint .",
+    "lint": "eslint src/functions",
     "serve": "sudo firebase serve --only functions",
     "shell": "firebase functions:shell",
     "start": "npm run shell",
@@ -34,12 +34,12 @@
     "stripe": "^6.14.0"
   },
   "devDependencies": {
-    "cz-conventional-changelog": "^2.1.0",
-    "eslint": "^4.12.0",
-    "eslint-plugin-promise": "^3.6.0",
     "@babel/cli": "^7.2.0",
     "@babel/core": "^7.2.0",
-    "@babel/preset-env": "^7.2.0"
+    "@babel/preset-env": "^7.2.0",
+    "cz-conventional-changelog": "^2.1.0",
+    "eslint": "5.10.0",
+    "eslint-plugin-promise": "^3.6.0"
   },
   "config": {
     "commitizen": {
