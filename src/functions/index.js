@@ -72,35 +72,39 @@ exports.createSnuzes = functions.https.onRequest((req, res) => {
   const userDocRef = firestore.collection('users').doc(req.body.userId);
   firestore.runTransaction(async (transaction) => {
     try {
-      const invoiceRef = await transaction;
       // read operations must happen before write operations in a transaction
       const userDoc = await transaction.get(userDocRef);
+      const invoiceRef = userDoc.data().activeInvoice;
+      const invoiceDoc = await transaction.get(invoiceRef);
+      let snuzeAmtTotal = 0;
       // collect references to add to current invoice
-      let snuzeDocRefs = [];
+      let snuzeRefs = [];
       // create a list of promises to handle in parallel
       let snuzeDocPromises = [];
       for(let snuze of req.body.snuzes) {
         // convert alarmTime into date format usable by firebase
         snuze.alarmTime = moment(snuze.alarmTime, "YYYY-MM-DD HH:mm", true).toDate();
-        snuze.billed = false;
-        try {
-          const snuzeRef = snuzeCollectionRef.doc();
-          snuzeDocRefs.push(snuzeRef);
-          const snuzeDoc = transaction.set(snuzeRef, snuze);
-          snuzeDocPromises.push(snuzeDoc);
-        } catch (err) {
-          console.log(err);
-          return Promise.reject(new Error("Something went wrong"));
-        }
-        // update snuze references on user object all at once
+        snuzeAmtTotal += snuze.snuzeAmount;
+        const snuzeRef = snuzeCollectionRef.doc();
+        snuzeRefs.push(snuzeRef);
+        snuze.id = snuzeRef.id;
+        snuze.invoideRef = invoiceRef;
+        const snuzeDoc = transaction.set(snuzeRef, snuze);
+        snuzeDocPromises.push(snuzeDoc);
       }
-      // fire all promises in parallel
+        // fire all promises in parallel
       await Promise.all(snuzeDocPromises);
-      return res.send('CREATED_SNUZES');
+      await transaction.update(invoiceRef, {
+        currentTotal: invoiceDoc.data().currentTotal + snuzeAmtTotal,
+        snuzeRefs: FieldValue.arrayUnion(...snuzeRefs),
+      });
     } catch(err) {
       console.log(err);
       return Promise.reject(new Error('Something went wrong'));
     }
+  })
+  .then(() => {
+    return res.send('CREATED_SNUZES');
   })
   .catch(err => {
     console.log(err);

@@ -6,9 +6,10 @@
   "scripts": {
     "test": "npm test",
     "lint": "eslint src/functions",
-    "serve": "sudo firebase serve --only functions",
+    "func:serve": "sudo firebase serve --only functions",
     "shell": "firebase functions:shell",
     "start": "npm run shell",
+    "func:watch": "npx babel src/functions --watch --out-dir dist/functions",
     "func:install": "cd dist/functions && npm i",
     "func:deploy": "firebase deploy --only functions",
     "func:predeploy": "npm run func:clean && npm run func:build && npm run func:copy",
