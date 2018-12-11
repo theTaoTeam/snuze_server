@@ -11,12 +11,6 @@ const settings = {
 firestore.settings(settings);
 const FieldValue = admin.firestore.FieldValue;
 
-
-const testUser = {
-  email: "clamptron@gmail.com",
-  source: 'tok_visa'
-}
-
 exports.createUser = functions.https.onRequest(async (req, res) => {
   try {
     const stripeData = {
