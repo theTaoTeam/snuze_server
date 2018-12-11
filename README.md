@@ -2,7 +2,16 @@
 ## Setup
 
 #### npm
-There are 2 separate package.json files. The root dependencies are for global setup like commitizen. The package.json inside the functions folder is necessary for all dependencies of firebase functions server.
+Check the scripts in the package.json for additional usage info. Make sure to follow the firebase steps before attempting to run local server or deploy.
+##### local server
+    1. For now we need 2 terminal windows so we can use babel watch.
+    2. In your second terminal window run `npm run func:watch`.
+        - If this is your first time running the server locally, run `npm run func:predeploy`.
+    3. In your first terminal window run `npm run func:serve`.
+
+##### deploy
+    1. Run `npm run func:predeploy`.
+    2. Run `npm run func:deploy`.
 
 #### Firebase
 Make sure you've logged into Firebase using the firebase cli.
