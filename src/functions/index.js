@@ -33,33 +33,30 @@ exports.createUser = functions.https.onRequest(async (req, res) => {
       activeInvoice: invoiceRef,
       invoiceRefs: FieldValue.arrayUnion(invoiceRef)
     };
-    return firestore
+    await firestore
       .collection('users')
       .doc(fullUser.authId)
-      .set(fullUser)
-      .then(() => {
-        return res.status(303).send('CREATED_USER');
-      }).catch((err) => {
+      .set(fullUser).catch(err => {
         console.log(err);
-        return res.status(500).send('ERR_FIREBASE');
+        return Promise.reject(new Error('Error creating user'));
       });
+    
+    const fullInvoice = {
+      billed: false,
+      currentTotal: 0,
+      id: invoiceRef.id,
+      snuzeRefs: [],
+      userRef: firestore.collection('users').doc(fullUser.authId)
+    };
+    await invoiceRef.set(fullInvoice).catch(err => {
+      console.log(err);
+      return Promise.reject(new Error('Error creating invoice'));
+    });
+    
+    return res.send('CREATED_USER');
   } catch(err) {
     console.log(err);
     return res.status(500).send('ERR_CREATE_USER');
-  }
-});
-
-exports.createNewInvoice = functions.https.onRequest(async (req, res) => {
-  const invoiceRef = firestore.collection('invoices').doc();
-  try {
-    const userDoc = await firestore.collection('users').doc(req.body.userId).update({
-      activeInvoice: invoiceRef,
-      invoiceRefs: FieldValue.arrayUnion(invoiceRef)
-    });
-    res.status(303).send('CREATED_INVOICE');
-  } catch(err) {
-    console.log(err);
-    res.status(500).send('ERR_CREATE_INVOICE');
   }
 });
 
@@ -111,13 +108,3 @@ exports.createSnuzes = functions.https.onRequest((req, res) => {
     return res.send('ERR_FIREBASE_SNUZES');
   });
 });
-
-// async function _getUser(userId) {
-//   const userRef = firestore.collection('users').doc(userId);
-//   try {
-//     const user = userRef.get();
-//     return user;
-//   } catch(err) {
-//     console.log('ERROR_GETTING_USER');
-//   }
-// }
