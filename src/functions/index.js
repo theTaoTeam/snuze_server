@@ -21,15 +21,14 @@ exports.createUser = functions.https.onRequest(async (req, res) => {
 
     const invoiceRef = firestore.collection('invoices').doc();
     const fullUser = {
-      authId: req.body.user.authId,
-      email: req.body.user.email,
+      uid: req.body.user.uid,
       stripeId: customer.id,
       activeInvoice: invoiceRef,
       invoiceRefs: FieldValue.arrayUnion(invoiceRef)
     };
     await firestore
       .collection('users')
-      .doc(fullUser.authId)
+      .doc(fullUser.uid)
       .set(fullUser).catch(err => {
         console.log(err);
         return Promise.reject(new Error('Error creating user'));
@@ -40,7 +39,7 @@ exports.createUser = functions.https.onRequest(async (req, res) => {
       currentTotal: 0,
       id: invoiceRef.id,
       snuzeRefs: [],
-      userRef: firestore.collection('users').doc(fullUser.authId)
+      userRef: firestore.collection('users').doc(fullUser.uid)
     };
     await invoiceRef.set(fullInvoice).catch(err => {
       console.log(err);
