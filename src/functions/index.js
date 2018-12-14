@@ -1,15 +1,12 @@
 require('dotenv').config();
 const stripe = require('stripe')(process.env.STRIPE_SECRET);
-const moment = require('moment');
+// const moment = require('moment');
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
-const serviceAccount = require(process.env.SERVICE_ACCOUNT);
-const FieldValue = admin.firestore.FieldValue;
+// const serviceAccount = require(process.env.SERVICE_ACCOUNT);
+// const FieldValue = admin.firestore.FieldValue;
 
-// admin.initializeApp({
-//   credential: admin.credential.cert(serviceAccount),
-//   databaseURL: "https://snuze-stage.firebaseio.com"
-// });
+admin.initializeApp();
 
 const firestore = new admin.firestore();
 const settings = {
