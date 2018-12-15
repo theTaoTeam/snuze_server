@@ -24,7 +24,7 @@ exports.createStripeUser = functions.https.onCall(async (data, context) => {
     return { id: stripeCustomer.id };
   } catch(err) {
     console.log(err);
-    return functions.https.HttpsError('stripe-error', 'error creating stripe customer');
+    throw new functions.https.HttpsError('stripe-error', 'error creating stripe customer');
   }
 });
 
