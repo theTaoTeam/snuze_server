@@ -14,10 +14,10 @@ const settings = {
 }
 firestore.settings(settings);
 
-exports.createStripeUser = functions.https.onCall(async (req, res) => {
+exports.createStripeUser = functions.https.onCall(async (data, context) => {
   const stripeData = {
-    email: req.body.email,
-    source: req.body.source
+    email: data.email,
+    source: data.source
   }
   try {
     const stripeCustomer = await stripe.customers.create(stripeData);
