@@ -21,10 +21,10 @@ exports.createStripeUser = functions.https.onCall(async (data, context) => {
   }
   try {
     const stripeCustomer = await stripe.customers.create(stripeData);
-    return res.status(200).send(stripeCustomer.id);
+    return { id: stripeCustomer.id };
   } catch(err) {
     console.log(err);
-    return res.status(400).send('ERR_STRIPE');
+    return functions.https.HttpsError('stripe-error', 'error creating stripe customer');
   }
 });
 
