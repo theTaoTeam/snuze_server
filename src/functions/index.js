@@ -1,29 +1,25 @@
 require('dotenv').config();
 const stripe = require('stripe')(process.env.STRIPE_SECRET);
-// const moment = require('moment');
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
-// const serviceAccount = require(process.env.SERVICE_ACCOUNT);
-// const FieldValue = admin.firestore.FieldValue;
+
 
 admin.initializeApp();
 
-const firestore = new admin.firestore();
-const settings = {
-  timestampsInSnapshots: true
-}
-firestore.settings(settings);
-
-exports.createStripeUser = functions.https.onCall(async (data, context) => {
-  const stripeData = {
-    email: data.email,
-    source: data.source
+app.post(path, (req, res) => {
+  const stripe_version = req.query.api_version;
+  if (!stripe_version) {
+    res.status(400).end();
+    return;
   }
-  try {
-    const stripeCustomer = await stripe.customers.create(stripeData);
-    return { id: stripeCustomer.id };
-  } catch(err) {
-    console.log(err);
-    throw new functions.https.HttpsError('stripe-error', 'error creating stripe customer');
-  }
+  // This function assumes that some previous middleware has determined the
+  // correct customerId for the session and saved it on the request object.
+  stripe.ephemeralKeys.create(
+    { customer: req.customerId },
+    { stripe_version: stripe_version }
+  ).then((key) => {
+    res.status(200).json(key);
+  }).catch((err) => {
+    res.status(500).end();
+  });
 });

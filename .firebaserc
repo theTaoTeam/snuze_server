@@ -1,6 +1,7 @@
 {
   "projects": {
     "staging": "snuze-stage",
-    "master": "snuze-e09c0"
+    "master": "snuze-e09c0",
+    "default": "snuze-stage"
   }
 }
