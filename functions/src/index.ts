@@ -36,7 +36,7 @@ exports.createSetupIntent = functions.https.onCall(async (data, context: functio
 
   try {
     // @ts-ignore
-    await stripe.paymentMethods.attach(data.paymentMethod, { customer: data.stripeId });
+    const paymentMethod = await stripe.paymentMethods.attach(data.paymentMethod, { customer: data.stripeId });
     // @ts-ignore
     const setupIntent = await stripe.setupIntents.create(stripeData);
     return;
