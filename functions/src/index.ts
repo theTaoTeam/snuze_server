@@ -28,7 +28,7 @@ exports.createSetupIntent = functions.https.onCall(async (data, context: functio
   }
 
   const stripeData = {
-    customer: data.customerId,
+    customer: data.stripeId,
     payment_method: data.paymentMethod,
     payment_method_types: ['card'],
     confirm: true
