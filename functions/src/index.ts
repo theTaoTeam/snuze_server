@@ -36,9 +36,10 @@ exports.createSetupIntent = functions.https.onCall(async (data, context: functio
 
   try {
     // @ts-ignore
+    await stripe.paymentMethods.attach(data.paymentMethod, { customer: data.stripeId });
+    // @ts-ignore
     const setupIntent = await stripe.setupIntents.create(stripeData);
-    console.log(setupIntent);
-    return setupIntent;
+    return;
   } catch(err) {
     console.log(err);
     throw new functions.https.HttpsError('aborted', 'error creating stripe setupIntent');
